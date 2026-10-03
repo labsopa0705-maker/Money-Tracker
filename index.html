@@ -9,46 +9,64 @@
     <style>
         body { 
             font-family: 'Prompt', sans-serif; 
-            
-            /* 🖼️ เปลี่ยนภาพพื้นหลังตรงนี้ครับ */
             background-image: url('https://4kwallpapers.com/images/walls/thumbs_3t/11145.jpg');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed; /* ทำให้ภาพอยู่กับที่เวลาเลื่อนจอ */
+            background-attachment: fixed;
         }
-        
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+            -webkit-appearance: none; margin: 0; 
         }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="p-4 md:p-8 flex justify-center items-start min-h-screen">
+<body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
 
-    <!-- ปรับกล่องให้เป็นสไตล์กระจก (Glassmorphism) ทะลุเห็นพื้นหลังเบลอๆ: bg-white/90 และ backdrop-blur-xl -->
-    <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-2xl border border-white/50">
-        <h1 class="text-2xl md:text-3xl font-semibold text-center mb-8 text-slate-800 drop-shadow-sm">
-            📝 ระบบบันทึกรายรับ-รายจ่าย by IQ EE
-        </h1>
+    <!-- 🔒 หน้าต่าง Login / Register -->
+    <div id="auth-section" class="w-full max-w-sm bg-white/95 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50">
+        <h2 class="text-2xl font-semibold text-center mb-6 text-slate-800">🔐 เข้าสู่ระบบ</h2>
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อผู้ใช้ (Username)</label>
+                <input type="text" id="username" required class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none bg-white/80">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">รหัสผ่าน (Password)</label>
+                <input type="password" id="password" required class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none bg-white/80">
+            </div>
+            <div class="pt-2 flex flex-col gap-3">
+                <button type="submit" onclick="setAuthAction('login')" class="w-full bg-blue-600/90 text-white p-3 rounded-xl hover:bg-blue-700 transition-all font-medium">เข้าสู่ระบบ</button>
+                <button type="submit" onclick="setAuthAction('register')" class="w-full bg-emerald-500/90 text-white p-3 rounded-xl hover:bg-emerald-600 transition-all font-medium">สมัครสมาชิกใหม่</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 📊 หน้าต่าง ระบบหลัก (ซ่อนไว้ก่อนจนกว่าจะล็อกอิน) -->
+    <div id="app-section" class="w-full max-w-2xl bg-white/95 backdrop-blur-xl p-6 md:p-8 rounded-3xl shadow-2xl border border-white/50 hidden">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-xl md:text-2xl font-semibold text-slate-800 drop-shadow-sm">📝 บันทึกรายรับ-รายจ่าย</h1>
+            <div class="flex items-center gap-3">
+                <span id="user-display" class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100"></span>
+                <button onclick="logout()" class="text-sm text-rose-500 hover:text-rose-700 font-medium">ออกจากระบบ</button>
+            </div>
+        </div>
 
         <!-- สรุปยอด -->
         <div class="grid grid-cols-3 gap-3 md:gap-6 mb-8 text-center">
             <div class="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-100">
                 <p class="text-xs md:text-sm text-emerald-600 font-medium mb-1">📈 รายรับ</p>
-                <p id="total-income" class="text-lg md:text-2xl font-semibold text-emerald-700 drop-shadow-sm">...</p>
+                <p id="total-income" class="text-lg md:text-2xl font-semibold text-emerald-700">0.00</p>
             </div>
             <div class="bg-rose-50/80 p-4 rounded-2xl border border-rose-100">
                 <p class="text-xs md:text-sm text-rose-600 font-medium mb-1">📉 รายจ่าย</p>
-                <p id="total-expense" class="text-lg md:text-2xl font-semibold text-rose-700 drop-shadow-sm">...</p>
+                <p id="total-expense" class="text-lg md:text-2xl font-semibold text-rose-700">0.00</p>
             </div>
             <div class="bg-sky-50/80 p-4 rounded-2xl border border-sky-100">
-                <p class="text-xs md:text-sm text-sky-600 font-medium mb-1">💰 คงเหลือ(ประหยัดๆหน่อย)</p>
-                <p id="total-balance" class="text-lg md:text-2xl font-semibold text-sky-700 drop-shadow-sm">...</p>
+                <p class="text-xs md:text-sm text-sky-600 font-medium mb-1">💰 คงเหลือ</p>
+                <p id="total-balance" class="text-lg md:text-2xl font-semibold text-sky-700">0.00</p>
             </div>
         </div>
 
@@ -57,217 +75,225 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">📅 วันที่</label>
-                    <input type="date" id="date" name="date" required 
-                           class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none transition text-slate-700 bg-white/80">
+                    <input type="date" id="date" name="date" required class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none bg-white/80">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">🏷️ ประเภท</label>
-                    <select id="type" name="type" required 
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none transition text-slate-700 bg-white/80">
+                    <select id="type" name="type" required class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none bg-white/80">
                         <option value="รายรับ">🟢 รายรับ</option>
                         <option value="รายจ่าย" selected>🔴 รายจ่าย</option>
                     </select>
                 </div>
-                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-600 mb-1">✍️ รายการ</label>
-                    <input type="text" id="description" name="description" required placeholder="พิมพ์รายการ..." 
-                           class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none transition text-slate-700 bg-white/80 mb-3">
+                    <input type="text" id="description" name="description" required placeholder="พิมพ์รายการ..." class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none bg-white/80 mb-3">
                     
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="setDesc('อาหาร')" class="px-3 py-1.5 bg-orange-50/80 text-orange-600 rounded-lg text-sm border border-orange-100 hover:bg-orange-100 transition active:scale-95">🍜 อาหาร</button>
-                        <button type="button" onclick="setDesc('น้ำดื่ม')" class="px-3 py-1.5 bg-cyan-50/80 text-cyan-600 rounded-lg text-sm border border-cyan-100 hover:bg-cyan-100 transition active:scale-95">💧 น้ำดื่ม</button>
-                        <button type="button" onclick="setDesc('ขนม/ของว่าง')" class="px-3 py-1.5 bg-pink-50/80 text-pink-600 rounded-lg text-sm border border-pink-100 hover:bg-pink-100 transition active:scale-95">🍩 ขนม</button>
-                        <button type="button" onclick="setDesc('เดินทาง')" class="px-3 py-1.5 bg-emerald-50/80 text-emerald-600 rounded-lg text-sm border border-emerald-100 hover:bg-emerald-100 transition active:scale-95">🚌 เดินทาง</button>
-                        <button type="button" onclick="setDesc('ตั๋วหนัง/บันเทิง')" class="px-3 py-1.5 bg-purple-50/80 text-purple-600 rounded-lg text-sm border border-purple-100 hover:bg-purple-100 transition active:scale-95">🎬 ตั๋วหนัง</button>
-                        <button type="button" onclick="setDesc('ช้อปปิ้ง')" class="px-3 py-1.5 bg-rose-50/80 text-rose-600 rounded-lg text-sm border border-rose-100 hover:bg-rose-100 transition active:scale-95">🛍️ ช้อปปิ้ง</button>
+                        <button type="button" onclick="setDesc('อาหาร')" class="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-sm border border-orange-100">🍜 อาหาร</button>
+                        <button type="button" onclick="setDesc('น้ำดื่ม')" class="px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-lg text-sm border border-cyan-100">💧 น้ำดื่ม</button>
+                        <button type="button" onclick="setDesc('เดินทาง')" class="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm border border-emerald-100">🚌 เดินทาง</button>
+                        <button type="button" onclick="setDesc('ช้อปปิ้ง')" class="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-sm border border-rose-100">🛍️ ช้อปปิ้ง</button>
                     </div>
                 </div>
-
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-600 mb-1">💵 จำนวนเงิน (บาท)</label>
-                    <input type="number" id="amount" name="amount" required min="0" step="0.01" placeholder="0.00"
-                           class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none transition text-lg font-semibold text-slate-700 bg-white/80">
+                    <input type="number" id="amount" name="amount" required min="0" step="0.01" placeholder="0.00" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border outline-none text-lg font-semibold bg-white/80">
                 </div>
             </div>
-            
             <div class="pt-2 flex gap-4">
-                <button type="button" id="reset-btn" 
-                        class="w-1/3 bg-slate-100/80 text-slate-600 px-2 py-3 rounded-xl hover:bg-slate-200 transition-all font-medium text-base md:text-lg flex justify-center items-center gap-2 active:scale-95">
-                    <span>🧹 ล้าง</span>
-                </button>
-                <button type="submit" id="submit-btn" 
-                        class="w-2/3 bg-blue-600/90 backdrop-blur text-white px-2 py-3 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all font-medium text-base md:text-lg flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
-                    <span>💾 บันทึกข้อมูล</span>
-                </button>
+                <button type="button" onclick="document.getElementById('transaction-form').reset(); document.getElementById('date').valueAsDate = new Date();" class="w-1/3 bg-slate-100 text-slate-600 px-2 py-3 rounded-xl hover:bg-slate-200 transition-all font-medium">🧹 ล้าง</button>
+                <button type="submit" id="submit-btn" class="w-2/3 bg-blue-600 text-white px-2 py-3 rounded-xl shadow-lg hover:bg-blue-700 transition-all font-medium">💾 บันทึกข้อมูล</button>
             </div>
         </form>
 
         <!-- ประวัติรายการ -->
         <div class="mt-8 pt-6 border-t border-slate-200/60">
-            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <span>🕒</span> ประวัติรายการล่าสุด
-            </h2>
-            <div id="history-list" class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <p class="text-center text-slate-400 py-4 text-sm">กำลังโหลดข้อมูล...</p>
-            </div>
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2"><span>🕒</span> ประวัติรายการล่าสุด</h2>
+            <div id="history-list" class="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
         </div>
     </div>
 
     <!-- แจ้งเตือน (Toast) -->
-    <div id="toast" class="fixed bottom-5 right-5 md:bottom-10 md:right-10 transform transition-all duration-300 translate-y-20 opacity-0 bg-emerald-500/95 backdrop-blur text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50">
-        <span id="toast-icon" class="text-xl">✅</span>
-        <span id="toast-message" class="font-medium">บันทึกข้อมูลเรียบร้อย!</span>
+    <div id="toast" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 text-white font-medium">
+        <span id="toast-icon">✅</span> <span id="toast-message"></span>
     </div>
 
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbx2SNBBkTjkB45jjTKe4SicWv1ntVfWJfMzV_bdnwKjyeG6REOVL9nnYT2XW8F1ONYX/exec';
+        // ⚠️ เปลี่ยน URL ด้านล่างนี้เป็นอันใหม่ที่เพิ่ง Deploy มา
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzzMqetO17evxcMDmafnTs7-EdxqqENbYez7caABi6gUKK3GfklE_8yal_aXk2Qke1GDg/exec';
         
-        const form = document.getElementById('transaction-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
-        const toastIcon = document.getElementById('toast-icon');
+        let currentUser = localStorage.getItem('loggedUser');
+        let authMode = 'login'; // login หรือ register
 
-        document.getElementById('date').valueAsDate = new Date();
-
-        let currentIncome = 0;
-        let currentExpense = 0;
-        let historyData = []; 
-
-        function setDesc(text) {
-            const descInput = document.getElementById('description');
-            descInput.value = text;
-            descInput.focus();
+        // ตรวจสอบตอนเปิดเว็บว่าล็อกอินหรือยัง
+        if (currentUser) {
+            showApp();
+            fetchInitialData();
         }
 
-        async function fetchInitialData() {
+        function setAuthAction(action) {
+            authMode = action;
+        }
+
+        // ระบบล็อกอิน / สมัครสมาชิก
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            
+            showToast('กำลังดำเนินการ...', 'info');
+            
+            const formData = new FormData();
+            formData.append('action', authMode);
+            formData.append('username', user);
+            formData.append('password', pass);
+
             try {
-                const response = await fetch(scriptURL);
+                const response = await fetch(scriptURL, { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showToast(result.message, 'success');
+                    if (authMode === 'login' || authMode === 'register') {
+                        currentUser = user;
+                        localStorage.setItem('loggedUser', user);
+                        showApp();
+                        fetchInitialData();
+                    }
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (error) {
+                showToast('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้', 'error');
+            }
+        });
+
+        // ฟังก์ชันสลับหน้า
+        function showApp() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('app-section').classList.remove('hidden');
+            document.getElementById('user-display').innerText = '👤 ' + currentUser;
+            document.getElementById('date').valueAsDate = new Date();
+            document.body.classList.remove('items-center');
+            document.body.classList.add('items-start');
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedUser');
+            currentUser = null;
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('app-section').classList.add('hidden');
+            document.getElementById('auth-form').reset();
+            document.body.classList.add('items-center');
+            document.body.classList.remove('items-start');
+        }
+
+        // โหลดข้อมูลตาม User
+        async function fetchInitialData() {
+            document.getElementById('history-list').innerHTML = '<p class="text-center text-slate-400 py-4">กำลังโหลดข้อมูล...</p>';
+            try {
+                const response = await fetch(`${scriptURL}?username=${currentUser}`);
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    currentIncome = result.totalIncome;
-                    currentExpense = result.totalExpense;
-                    historyData = result.history || [];
-                    renderDashboard();
-                    renderHistory(); 
+                    renderDashboard(result.totalIncome, result.totalExpense);
+                    renderHistory(result.history);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('total-balance').innerText = "เชื่อมต่อไม่ได้";
-                document.getElementById('history-list').innerHTML = '<p class="text-center text-rose-400 py-4 text-sm">โหลดประวัติล้มเหลว</p>';
+                document.getElementById('history-list').innerHTML = '<p class="text-center text-rose-400 py-4">โหลดข้อมูลล้มเหลว</p>';
             }
         }
 
-        fetchInitialData();
+        // บันทึกรายการใหม่
+        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ กำลังบันทึก...';
 
-        function showToast(message, type = 'success') {
-            toastMessage.innerText = message;
+            const formData = new FormData(e.target);
+            formData.append('action', 'addTransaction');
+            formData.append('username', currentUser); // ส่งชื่อคนบันทึกไปด้วย
+            
+            const rawType = formData.get('type');
+            formData.set('type', rawType.includes('รายรับ') ? 'รายรับ' : 'รายจ่าย');
+            
+            const dateStr = formData.get('date').split('-');
+            formData.set('date', `${dateStr[2]}/${dateStr[1]}/${dateStr[0]}`);
+
+            try {
+                const response = await fetch(scriptURL, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
+                    e.target.reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    fetchInitialData(); // โหลดข้อมูลใหม่เพื่ออัปเดตยอด
+                }
+            } catch (error) {
+                showToast('บันทึกล้มเหลว', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '💾 บันทึกข้อมูล';
+            }
+        });
+
+        function setDesc(text) {
+            document.getElementById('description').value = text;
+        }
+
+        function renderDashboard(income, expense) {
+            const balance = income - expense;
+            document.getElementById('total-income').innerText = income.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('total-expense').innerText = expense.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('total-balance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2});
+        }
+
+        function renderHistory(data) {
+            const container = document.getElementById('history-list');
+            container.innerHTML = ''; 
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-400 py-4">ยังไม่มีรายการ</p>';
+                return;
+            }
+            data.forEach(item => {
+                const isIncome = item.type === 'รายรับ';
+                const sign = isIncome ? '+' : '-';
+                const color = isIncome ? 'text-emerald-600' : 'text-rose-600';
+                const bgColor = isIncome ? 'bg-emerald-50' : 'bg-rose-50';
+                
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white/50">
+                        <div>
+                            <p class="font-medium text-slate-700">${item.description}</p>
+                            <p class="text-xs text-slate-400">${item.date}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold ${color}">${sign} ${item.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</p>
+                            <p class="text-[10px] px-2 py-0.5 rounded-full inline-block mt-1 ${bgColor} ${color} border ${isIncome ? 'border-emerald-100' : 'border-rose-100'}">${item.type}</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = message;
             
             if (type === 'success') {
-                toast.className = "fixed bottom-5 right-5 md:bottom-10 md:right-10 transform transition-all duration-300 bg-emerald-500/95 backdrop-blur text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 translate-y-0 opacity-100";
-                toastIcon.innerText = '✅';
+                toast.className = "fixed bottom-5 right-5 transform transition-all duration-300 bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 translate-y-0 opacity-100";
+                document.getElementById('toast-icon').innerText = '✅';
+            } else if (type === 'error') {
+                toast.className = "fixed bottom-5 right-5 transform transition-all duration-300 bg-rose-500 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 translate-y-0 opacity-100";
+                document.getElementById('toast-icon').innerText = '❌';
             } else {
-                toast.className = "fixed bottom-5 right-5 md:bottom-10 md:right-10 transform transition-all duration-300 bg-rose-500/95 backdrop-blur text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 translate-y-0 opacity-100";
-                toastIcon.innerText = '❌';
+                toast.className = "fixed bottom-5 right-5 transform transition-all duration-300 bg-blue-500 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 translate-y-0 opacity-100";
+                document.getElementById('toast-icon').innerText = '⏳';
             }
-
             setTimeout(() => {
                 toast.classList.remove('translate-y-0', 'opacity-100');
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3000);
-        }
-
-        resetBtn.addEventListener('click', () => {
-            form.reset();
-            document.getElementById('date').valueAsDate = new Date();
-        });
-
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
-
-            const formData = new FormData(form);
-            const rawType = formData.get('type');
-            const actualType = rawType.includes('รายรับ') ? 'รายรับ' : 'รายจ่าย'; 
-            formData.set('type', actualType);
-
-            const amount = parseFloat(formData.get('amount'));
-            const desc = formData.get('description');
-            const dateStr = formData.get('date'); 
-            
-            const dateParts = dateStr.split('-');
-            const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-
-            fetch(scriptURL, { method: 'POST', body: formData })
-                .then(response => {
-                    showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
-                    
-                    if (actualType === 'รายรับ') currentIncome += amount;
-                    else currentExpense += amount;
-                    
-                    renderDashboard();
-
-                    historyData.unshift({
-                        date: displayDate,
-                        type: actualType,
-                        description: desc,
-                        amount: amount
-                    });
-                    renderHistory(); 
-
-                    document.getElementById('description').value = '';
-                    document.getElementById('amount').value = '';
-                })
-                .catch(error => {
-                    showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
-                })
-                .finally(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<span>💾 บันทึกข้อมูล</span>';
-                });
-        });
-
-        function renderDashboard() {
-            const balance = currentIncome - currentExpense;
-            document.getElementById('total-income').innerText = currentIncome.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('total-expense').innerText = currentExpense.toLocaleString('th-TH', {minimumFractionDigits: 2});
-            document.getElementById('total-balance').innerText = balance.toLocaleString('th-TH', {minimumFractionDigits: 2});
-        }
-
-        function renderHistory() {
-            const container = document.getElementById('history-list');
-            container.innerHTML = ''; 
-
-            if (historyData.length === 0) {
-                container.innerHTML = '<p class="text-center text-slate-400 py-4 text-sm">ยังไม่มีรายการบันทึก</p>';
-                return;
-            }
-
-            historyData.forEach(item => {
-                const isIncome = item.type === 'รายรับ';
-                const sign = isIncome ? '+' : '-';
-                const color = isIncome ? 'text-emerald-600' : 'text-rose-600';
-                const bgColor = isIncome ? 'bg-emerald-50/80' : 'bg-rose-50/80';
-
-                const html = `
-                    <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-white/50 hover:bg-white transition-colors">
-                        <div>
-                            <p class="font-medium text-slate-700 text-sm md:text-base">${item.description}</p>
-                            <p class="text-xs text-slate-400 mt-0.5">${item.date}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-semibold ${color}">${sign} ${item.amount.toLocaleString('th-TH', {minimumFractionDigits: 2})}</p>
-                            <p class="text-[10px] px-2 py-0.5 rounded-full inline-block mt-1 ${bgColor} ${color} font-medium border ${isIncome ? 'border-emerald-100' : 'border-rose-100'}">${item.type}</p>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += html;
-            });
         }
     </script>
 </body>
